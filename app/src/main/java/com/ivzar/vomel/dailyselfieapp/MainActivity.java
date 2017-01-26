@@ -10,12 +10,14 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.ImageView;
+import android.widget.ListView;
+
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
     public static final String TAG = "DailySelfie";
     public static final int REQUEST_IMAGE_CAPTURE = 1;
-    private ImageView mImageView;
+    private SelfieListAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,8 +28,10 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setIcon(R.mipmap.ic_launcher);
-        mImageView = (ImageView) findViewById(R.id.preview);
 
+        mAdapter = new SelfieListAdapter(getApplicationContext(), this);
+        ListView listView = (ListView) findViewById(R.id.list);
+        listView.setAdapter(mAdapter);
     }
 
     @Override
@@ -60,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Bundle extras = data.getExtras();
             Bitmap bitmap = (Bitmap) extras.get("data");
-            mImageView.setImageBitmap(bitmap);
+            mAdapter.add(new Selfie(bitmap, new Date().toString()));
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
