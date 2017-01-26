@@ -17,12 +17,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.ivzar.vomel.dailyselfieapp.MainActivity.TAG;
+import static com.ivzar.vomel.dailyselfieapp.SelfieListAdapter.ITEM_SEP;
 
 /**
  * Created by vomel on 26/01/2017.
  */
 
 public class SelfieListAdapter extends BaseAdapter {
+    public static final String ITEM_SEP = System.getProperty("line.separator");
+
     private final List<Selfie> mItems = new ArrayList<>();
     private final Context mContext;
     private MainActivity activity;
@@ -67,7 +70,7 @@ public class SelfieListAdapter extends BaseAdapter {
     public View getView(final int position, View convertView, ViewGroup parent) {
         Log.i(TAG, "getView: " + position + ", " + convertView + ", " + parent);
         Selfie item = (Selfie) getItem(position);
-        ViewHolder viewHolder = null;
+        ViewHolder viewHolder;
         if (convertView == null) {
             LayoutInflater layoutInflater = LayoutInflater.from(mContext);
             convertView = layoutInflater.inflate(R.layout.selfie, parent, false);
@@ -116,4 +119,9 @@ class Selfie {
 
     Bitmap preview;
     CharSequence description;
+
+    @Override
+    public String toString() {
+        return description + ITEM_SEP + preview;
+    }
 }

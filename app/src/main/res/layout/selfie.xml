@@ -9,8 +9,8 @@
 
     <ImageView
         android:id="@+id/previewView"
-        android:layout_width="45dp"
-        android:layout_height="45dp"
+        android:layout_width="@dimen/preview_width"
+        android:layout_height="@dimen/preview_height"
         android:layout_margin="5dp"
         android:padding="10dp"
         android:contentDescription="@string/description"/>
