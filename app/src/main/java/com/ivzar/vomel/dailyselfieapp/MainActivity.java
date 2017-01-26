@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File storageDir = getStorageDir();
         File image = File.createTempFile(
                 imageFileName,  /* prefix */
                 ".jpg",         /* suffix */
@@ -81,6 +81,10 @@ public class MainActivity extends AppCompatActivity {
         // Save a file: path for use with ACTION_VIEW intents
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
+    }
+
+    File getStorageDir() {
+        return getExternalFilesDir(Environment.DIRECTORY_PICTURES);
     }
 
     private void takePicture() {
@@ -100,7 +104,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void readPic() {
+    private void readPic(String fileName) {
+        Log.i(TAG, "readPic: " + fileName);
         /* There isn't enough memory to open up more than a couple camera photos */
         /* So pre-scale the target bitmap into which the file is decoded */
 
@@ -111,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
         /* Get the size of the image */
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+        BitmapFactory.decodeFile(fileName, bmOptions);
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
 
@@ -127,10 +132,10 @@ public class MainActivity extends AppCompatActivity {
         bmOptions.inPurgeable = true;
 
         /* Decode the JPEG file into a Bitmap */
-        Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+        Bitmap bitmap = BitmapFactory.decodeFile(fileName, bmOptions);
 
         /* Associate the Bitmap to the ImageView */
-        mAdapter.add(new Selfie(bitmap, new File(mCurrentPhotoPath).getName()));
+        mAdapter.add(new Selfie(bitmap, new File(fileName).getName()));
     }
 
     @Override
@@ -142,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
                 Bitmap bitmap = (Bitmap) extras.get("data");
                 mAdapter.add(new Selfie(bitmap, new Date().toString()));
             } else {
-                readPic();
+                readPic(mCurrentPhotoPath);
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
@@ -157,53 +162,23 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-//        if (mAdapter.getCount() == 0) loadItems();
+        if (mAdapter.getCount() == 0) loadItems();
     }
 
-/*    private void loadItems() {
-        BufferedReader br = null;
-        try {
-            FileInputStream fis = openFileInput(FILE_NAME);
-            br = new BufferedReader(new InputStreamReader(fis));
-            String description = null;
-            Bitmap preview = null;
-            while ((description = br.readLine()) != null) {
-                Log.i(TAG, "loadItems: " + description);
-                preview = BitmapFactory.decodeStream(new ByteArrayInputStream(br.readLine().getBytes()));
-                mAdapter.add(new Selfie(preview, description));
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            FileOutputStream fos = null;
-            try {
-                fos = openFileOutput(FILE_NAME, MODE_PRIVATE);
-                PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(fos)));
-                writer.print("");
-            } catch (FileNotFoundException e1) {
-                e1.printStackTrace();
-            } finally {
-                try {
-                    fos.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
-
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+    private void loadItems() {
+        File storageDir = getStorageDir();
+        if (isValidDir(storageDir)) {
+            for (File picFile : storageDir.listFiles()) {
+                readPic(picFile.getAbsolutePath());
             }
         }
     }
 
-    private void saveItems() {
+    static boolean isValidDir(File storageDir) {
+        return storageDir != null && storageDir.exists() && storageDir.isDirectory();
+    }
+
+/*    private void saveItems() {
         PrintWriter printWriter = null;
         try {
             FileOutputStream fos = openFileOutput(FILE_NAME, MODE_PRIVATE);

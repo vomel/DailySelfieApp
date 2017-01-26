@@ -13,10 +13,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.ivzar.vomel.dailyselfieapp.MainActivity.TAG;
+import static com.ivzar.vomel.dailyselfieapp.MainActivity.isValidDir;
 import static com.ivzar.vomel.dailyselfieapp.SelfieListAdapter.ITEM_SEP;
 
 /**
@@ -51,6 +53,14 @@ public class SelfieListAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
+    private void removeFile(int pos) {
+        File storageDir = activity.getStorageDir();
+        if (isValidDir(storageDir)) {
+            File image = new File(storageDir, mItems.get(pos).description);
+            if (image.exists()) image.delete();
+        }
+    }
+
     @Override
     public int getCount() {
         return mItems.size();
@@ -68,7 +78,6 @@ public class SelfieListAdapter extends BaseAdapter {
 
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
-        Log.i(TAG, "getView: " + position + ", " + convertView + ", " + parent);
         Selfie item = (Selfie) getItem(position);
         ViewHolder viewHolder;
         if (convertView == null) {
@@ -93,6 +102,7 @@ public class SelfieListAdapter extends BaseAdapter {
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
+                                removeFile(position);
                                 remove(position);
                                 Toast.makeText(activity, "Deleted", Toast.LENGTH_SHORT).show();
                             }
@@ -112,13 +122,13 @@ public class SelfieListAdapter extends BaseAdapter {
 }
 
 class Selfie {
-    Selfie(Bitmap preview, CharSequence description) {
+    Selfie(Bitmap preview, String description) {
         this.preview = preview;
         this.description = description;
     }
 
     Bitmap preview;
-    CharSequence description;
+    String description;
 
     @Override
     public String toString() {
