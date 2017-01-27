@@ -1,12 +1,17 @@
 package com.ivzar.vomel.dailyselfieapp;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
@@ -21,12 +26,17 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     public static final String TAG = "DailySelfie";
     public static final int REQUEST_IMAGE_CAPTURE = 1;
+    public static final long INITIAL_ALARM_DELAY = 1000 * 2;
+    private AlarmManager mAlarmManager;
     private SelfieListAdapter mAdapter;
     private String mCurrentPhotoPath;
+    private PendingIntent mNotificationReceiverPendingIntent;
+    private Intent mNotificationReceiverIntent;
     private int targetW;
     private int targetH;
     int screenWidth;
@@ -40,6 +50,10 @@ public class MainActivity extends AppCompatActivity {
         }
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Get the AlarmManager Service
+        mAlarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -52,6 +66,20 @@ public class MainActivity extends AppCompatActivity {
         mAdapter = new SelfieListAdapter(getApplicationContext(), this);
         ListView listView = (ListView) findViewById(R.id.list);
         listView.setAdapter(mAdapter);
+        // Create an Intent to broadcast to the AlarmNotificationReceiver
+        mNotificationReceiverIntent = new Intent(MainActivity.this,
+                AlarmNotificationReceiver.class);
+
+        // Create an PendingIntent that holds the NotificationReceiverIntent
+        mNotificationReceiverPendingIntent = PendingIntent.getBroadcast(
+                MainActivity.this, 0, mNotificationReceiverIntent, 0);
+        // Set repeating alarm
+        mAlarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME,
+                SystemClock.elapsedRealtime() + INITIAL_ALARM_DELAY,
+                10000,
+//                AlarmManager.INTERVAL_FIFTEEN_MINUTES,
+                mNotificationReceiverPendingIntent);
+
     }
 
     @Override
@@ -99,13 +127,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void takePicture() {
+
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
         if (intent.resolveActivity(getPackageManager()) != null) {
             try {
                 File photoFile = createImageFile();
                 mCurrentPhotoPath = photoFile.getAbsolutePath();
                 Uri uri = FileProvider.getUriForFile(this, "com.ivzar.vomel.dailyselfieapp", photoFile);
                 intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+                List<ResolveInfo> resInfoList = getApplicationContext().getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                for (ResolveInfo resolveInfo : resInfoList) {
+                    String packageName = resolveInfo.activityInfo.packageName;
+                    getApplicationContext().grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                }
                 startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -151,9 +186,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.i(TAG, "onActivityResult: " + requestCode + ", " + resultCode + ", " + data);
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            if (extras != null) {
-                Bitmap bitmap = (Bitmap) extras.get("data");
+            if (data != null && data.getExtras() != null) {
+                Bitmap bitmap = (Bitmap) data.getExtras().get("data");
                 mAdapter.add(new Selfie(bitmap, new Date().toString()));
             } else {
                 readPicToAdapter(mCurrentPhotoPath);
