@@ -3,6 +3,7 @@ package com.ivzar.vomel.dailyselfieapp;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -121,10 +122,20 @@ public class SelfieListAdapter extends BaseAdapter {
         convertView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "onClick: ");
-                ImageView fullView = (ImageView) activity.findViewById(R.id.full_view);
-                fullView.setImageBitmap(MainActivity.getScaledBitmap(getSelfie(position).description, activity.screenWidth, activity.screenHeight));
-                fullView.setVisibility(View.VISIBLE);
+//                Log.i(TAG, "onClick: ");
+//                ImageView fullView = (ImageView) activity.findViewById(R.id.full_view);
+//                fullView.setImageBitmap(MainActivity.getScaledBitmap(getSelfie(position).description, activity.screenWidth, activity.screenHeight));
+//                fullView.setVisibility(View.VISIBLE);
+//                fullView.bringToFront();
+//                parent.requestLayout();
+//                parent.invalidate();
+
+                Intent intent = new Intent(activity, FullScreenActivity.class);
+                intent.putExtra("path", getSelfie(position).description);
+                activity.startActivity(intent);
+//                Intent intent = new Intent();
+//                intent.setAction(android.content.Intent.ACTION_VIEW); intent.setDataAndType(Uri.parse(new File(activity.getStorageDir(),getSelfie(position).description).getAbsolutePath()),"image/*");
+//                activity.startActivity(intent);
             }
         });
         return convertView;
