@@ -1,14 +1,16 @@
 package com.ivzar.vomel.dailyselfieapp;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.ColorDrawable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -119,26 +121,44 @@ public class SelfieListAdapter extends BaseAdapter {
                 return true;
             }
         });
-        convertView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                Log.i(TAG, "onClick: ");
-//                ImageView fullView = (ImageView) activity.findViewById(R.id.full_view);
-//                fullView.setImageBitmap(MainActivity.getScaledBitmap(getSelfie(position).description, activity.screenWidth, activity.screenHeight));
-//                fullView.setVisibility(View.VISIBLE);
-//                fullView.bringToFront();
-//                parent.requestLayout();
-//                parent.invalidate();
+        convertView.setOnClickListener(new OnClick(position, activity));
+        return convertView;
+    }
 
-                Intent intent = new Intent(activity, FullScreenActivity.class);
-                intent.putExtra("path", getSelfie(position).description);
-                activity.startActivity(intent);
+    private class OnClick implements View.OnClickListener {
+        private final int position;
+        private final MainActivity activity;
+
+        public OnClick(int position, MainActivity activity) {
+            this.position = position;
+            this.activity = activity;
+        }
+
+        @Override
+        public void onClick(View v) {
+            int width = activity.screenWidth;
+            int height = (int) (activity.screenHeight * 0.8);
+            String description = getSelfie(position).description;
+            Bitmap scaledBitmap = MainActivity.getScaledBitmap(new File(activity.getStorageDir(), description).getAbsolutePath(), width, height);
+            ImageView imView = new ImageView(activity); //(ImageView) inflated.findViewById(R.id.fullscreen);
+            imView.setImageBitmap(scaledBitmap);
+            imView.setContentDescription(description);
+            imView.setMaxWidth(width);
+            imView.setMaxHeight(height);
+            Dialog dialog = new Dialog(activity);
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            dialog.setContentView(imView);
+            dialog.setCanceledOnTouchOutside(true);
+            Window window = dialog.getWindow();
+            window.setLayout(width, height);
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+            dialog.show();
+
+            //SHOW as Intent
 //                Intent intent = new Intent();
 //                intent.setAction(android.content.Intent.ACTION_VIEW); intent.setDataAndType(Uri.parse(new File(activity.getStorageDir(),getSelfie(position).description).getAbsolutePath()),"image/*");
 //                activity.startActivity(intent);
-            }
-        });
-        return convertView;
+        }
     }
 
     private static class ViewHolder {

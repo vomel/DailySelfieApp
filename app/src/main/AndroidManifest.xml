@@ -33,8 +33,6 @@
                 android:resource="@xml/file_paths"/>
         </provider>
 
-        <activity android:name=".FullScreenActivity">
-        </activity>
     </application>
 
 </manifest>
