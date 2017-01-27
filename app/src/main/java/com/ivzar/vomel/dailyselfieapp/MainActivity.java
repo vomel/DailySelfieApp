@@ -1,6 +1,7 @@
 package com.ivzar.vomel.dailyselfieapp;
 
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -25,8 +26,11 @@ public class MainActivity extends AppCompatActivity {
     public static final String TAG = "DailySelfie";
     public static final int REQUEST_IMAGE_CAPTURE = 1;
     private SelfieListAdapter mAdapter;
-    public static final String FILE_NAME = "DailySelfieAppData.txt";
     private String mCurrentPhotoPath;
+    private int targetW;
+    private int targetH;
+    int screenWidth;
+    int screenHeight;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +41,10 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setIcon(R.mipmap.ic_launcher);
+        targetW = (int) getResources().getDimension(R.dimen.preview_width);
+        targetH = (int) getResources().getDimension(R.dimen.preview_height);
+        screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+        screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
 
         mAdapter = new SelfieListAdapter(getApplicationContext(), this);
         ListView listView = (ListView) findViewById(R.id.list);
@@ -95,7 +103,6 @@ public class MainActivity extends AppCompatActivity {
                 mCurrentPhotoPath = photoFile.getAbsolutePath();
                 Uri uri = FileProvider.getUriForFile(this, "com.ivzar.vomel.dailyselfieapp", photoFile);
                 intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
-//                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
                 startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -104,16 +111,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void readPic(String fileName) {
-        Log.i(TAG, "readPic: " + fileName);
+    private void readPicToAdapter(String fileName) {
+        Log.i(TAG, "readPicToAdapter: " + fileName);
         /* There isn't enough memory to open up more than a couple camera photos */
         /* So pre-scale the target bitmap into which the file is decoded */
+        Bitmap bitmap = getScaledBitmap(fileName, targetW, targetH);
 
-        /* Get the size of the ImageView */
-        int targetW = (int) getResources().getDimension(R.dimen.preview_width);
-        int targetH = (int) getResources().getDimension(R.dimen.preview_height);
+        /* Associate the Bitmap to the ImageView */
+        mAdapter.add(new Selfie(bitmap, new File(fileName).getName()));
+    }
 
-        /* Get the size of the image */
+    static Bitmap getScaledBitmap(String fileName, int targetW, int targetH) {
+    /* Get the size of the image */
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(fileName, bmOptions);
@@ -132,10 +141,7 @@ public class MainActivity extends AppCompatActivity {
         bmOptions.inPurgeable = true;
 
         /* Decode the JPEG file into a Bitmap */
-        Bitmap bitmap = BitmapFactory.decodeFile(fileName, bmOptions);
-
-        /* Associate the Bitmap to the ImageView */
-        mAdapter.add(new Selfie(bitmap, new File(fileName).getName()));
+        return BitmapFactory.decodeFile(fileName, bmOptions);
     }
 
     @Override
@@ -147,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
                 Bitmap bitmap = (Bitmap) extras.get("data");
                 mAdapter.add(new Selfie(bitmap, new Date().toString()));
             } else {
-                readPic(mCurrentPhotoPath);
+                readPicToAdapter(mCurrentPhotoPath);
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
@@ -156,7 +162,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-//        saveItems();
     }
 
     @Override
@@ -169,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
         File storageDir = getStorageDir();
         if (isValidDir(storageDir)) {
             for (File picFile : storageDir.listFiles()) {
-                readPic(picFile.getAbsolutePath());
+                readPicToAdapter(picFile.getAbsolutePath());
             }
         }
     }
@@ -177,26 +182,4 @@ public class MainActivity extends AppCompatActivity {
     static boolean isValidDir(File storageDir) {
         return storageDir != null && storageDir.exists() && storageDir.isDirectory();
     }
-
-/*    private void saveItems() {
-        PrintWriter printWriter = null;
-        try {
-            FileOutputStream fos = openFileOutput(FILE_NAME, MODE_PRIVATE);
-            printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(fos)));
-            for (int i = 0; i < mAdapter.getCount(); i++) {
-                Selfie item = (Selfie) mAdapter.getItem(i);
-                printWriter.println(item.description);
-                Log.i(TAG, "saveItems: " + item.description);
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-                item.preview.compress(Bitmap.CompressFormat.JPEG, 100, os);
-                printWriter.println(new String(os.toByteArray()));
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } finally {
-            if (printWriter != null) {
-                printWriter.close();
-            }
-        }
-    }*/
 }

@@ -68,6 +68,12 @@ public class SelfieListAdapter extends BaseAdapter {
 
     @Override
     public Object getItem(int position) {
+        return getSelfie(position);
+    }
+
+    public Selfie getSelfie(int position) {
+        if (mItems.size() <= position)
+            Log.e(TAG, "!!!getSelfie: position: " + position + ", in list: " + mItems.size());
         return mItems.get(position);
     }
 
@@ -77,9 +83,9 @@ public class SelfieListAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(final int position, View convertView, ViewGroup parent) {
-        Selfie item = (Selfie) getItem(position);
-        ViewHolder viewHolder;
+    public View getView(final int position, View convertView, final ViewGroup parent) {
+        Selfie item = getSelfie(position);
+        final ViewHolder viewHolder;
         if (convertView == null) {
             LayoutInflater layoutInflater = LayoutInflater.from(mContext);
             convertView = layoutInflater.inflate(R.layout.selfie, parent, false);
@@ -96,6 +102,7 @@ public class SelfieListAdapter extends BaseAdapter {
         convertView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(final View v) {
+                Log.i(TAG, "onLongClick: ");
                 new AlertDialog.Builder(activity)
                         .setTitle("Selfie Remover")
                         .setMessage("Do you really want to delete an selfie??")
@@ -109,6 +116,15 @@ public class SelfieListAdapter extends BaseAdapter {
                         })
                         .setNegativeButton(android.R.string.no, null).show();
                 return true;
+            }
+        });
+        convertView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i(TAG, "onClick: ");
+                ImageView fullView = (ImageView) activity.findViewById(R.id.full_view);
+                fullView.setImageBitmap(MainActivity.getScaledBitmap(getSelfie(position).description, activity.screenWidth, activity.screenHeight));
+                fullView.setVisibility(View.VISIBLE);
             }
         });
         return convertView;
