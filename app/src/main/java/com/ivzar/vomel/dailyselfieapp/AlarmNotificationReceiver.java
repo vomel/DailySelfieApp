@@ -22,17 +22,14 @@ public class AlarmNotificationReceiver extends BroadcastReceiver {
 
     // Notification Text Elements
     private final CharSequence tickerText = "Are You Playing Angry Birds Again!";
-    private final CharSequence contentTitle = "A Kind Reminder";
-    private final CharSequence contentText = "Get back to studying!!";
+    private final CharSequence contentTitle = "Daily Selfie";
+    private final CharSequence contentText = "Time for another selfie!!";
 
     // Notification Action Elements
     private Intent mNotificationIntent;
     private PendingIntent mContentIntent;
 
     // Notification Sound and Vibration on Arrival
-//    private final Uri soundURI = Uri
-//            .parse("android.resource://course.examples.Alarms.AlarmCreate/"
-//                    + R.raw.alarm_rooster);
     private final long[] mVibratePattern = {0, 200, 200, 300};
 
     @Override
@@ -43,15 +40,12 @@ public class AlarmNotificationReceiver extends BroadcastReceiver {
 
         // The PendingIntent that wraps the underlying Intent
         mContentIntent = PendingIntent.getActivity(context, 0, mNotificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-//        mContentIntent = PendingIntent.getActivity(context, 0, mNotificationIntent, Intent.FLAG_ACTIVITY_NEW_TASK);
 
         // Build the Notification
-        Notification.Builder notificationBuilder = new Notification.Builder(
-                context).setTicker(tickerText)
-                .setSmallIcon(android.R.drawable.stat_sys_warning)
+        Notification.Builder notificationBuilder = new Notification.Builder(context)
+                .setSmallIcon(android.R.drawable.ic_menu_camera)
                 .setAutoCancel(true).setContentTitle(contentTitle)
                 .setContentText(contentText).setContentIntent(mContentIntent)
-//                .setSound(soundURI)
                 .setVibrate(mVibratePattern);
 
         // Get the NotificationManager
@@ -59,12 +53,12 @@ public class AlarmNotificationReceiver extends BroadcastReceiver {
                 .getSystemService(Context.NOTIFICATION_SERVICE);
 
         // Pass the Notification to the NotificationManager:
-        mNotificationManager.notify(MY_NOTIFICATION_ID,
-                notificationBuilder.build());
+        Notification notification = notificationBuilder.build();
+        notification.defaults = Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND;
+        mNotificationManager.notify(MY_NOTIFICATION_ID, notification);
 
-        // Log occurence of notify() call
+        // Log occurrence of notify() call
         Log.i(MainActivity.TAG, "Sending notification at:" + DateFormat.getDateTimeInstance().format(new Date()));
-
     }
 }
 

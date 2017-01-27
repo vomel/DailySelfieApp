@@ -31,7 +31,8 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     public static final String TAG = "DailySelfie";
     public static final int REQUEST_IMAGE_CAPTURE = 1;
-    public static final long INITIAL_ALARM_DELAY = 1000 * 2;
+    public static final long INITIAL_ALARM_DELAY = 1000 * 60 * 2;
+    public static final int INTERVAL_TWO_MINUTES = 1000 * 60 * 2;
     private AlarmManager mAlarmManager;
     private SelfieListAdapter mAdapter;
     private String mCurrentPhotoPath;
@@ -67,17 +68,14 @@ public class MainActivity extends AppCompatActivity {
         ListView listView = (ListView) findViewById(R.id.list);
         listView.setAdapter(mAdapter);
         // Create an Intent to broadcast to the AlarmNotificationReceiver
-        mNotificationReceiverIntent = new Intent(MainActivity.this,
-                AlarmNotificationReceiver.class);
+        mNotificationReceiverIntent = new Intent(MainActivity.this, AlarmNotificationReceiver.class);
 
         // Create an PendingIntent that holds the NotificationReceiverIntent
-        mNotificationReceiverPendingIntent = PendingIntent.getBroadcast(
-                MainActivity.this, 0, mNotificationReceiverIntent, 0);
+        mNotificationReceiverPendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, mNotificationReceiverIntent, 0);
         // Set repeating alarm
         mAlarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME,
                 SystemClock.elapsedRealtime() + INITIAL_ALARM_DELAY,
-                10000,
-//                AlarmManager.INTERVAL_FIFTEEN_MINUTES,
+                INTERVAL_TWO_MINUTES,
                 mNotificationReceiverPendingIntent);
 
     }
@@ -95,10 +93,6 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "onOptionsItemSelected: " + item + ":" + item.getItemId());
         switch (item.getItemId()) {
             case R.id.action_camera:
-//                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-//                if (intent.resolveActivity(getPackageManager()) != null) {
-//                    startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
-//                }
                 takePicture();
                 return true;
             default:
@@ -109,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
     private File createImageFile() throws IOException {
         // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
+        String imageFileName = timeStamp + "_";
         File storageDir = getStorageDir();
         File image = File.createTempFile(
                 imageFileName,  /* prefix */
